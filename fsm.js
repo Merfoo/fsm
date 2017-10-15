@@ -1161,6 +1161,13 @@ function importFileChange(e) {
 }
 
 function setCanvasSize() {
+	if (canvas.width !== canvasWidthInput.value) {
+		var diff = (canvasWidthInput.value - canvas.width) / 2;
+
+		for(var i = 0; i < nodes.length; i++)
+			nodes[i].x += diff;
+	}
+	
 	canvas.width = canvasWidthInput.value;
 	canvas.height = canvasHeightInput.value;
 	draw();
