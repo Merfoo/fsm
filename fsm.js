@@ -795,6 +795,7 @@ var hitTargetPadding = 6; // pixels
 var selectedObject = null; // either a Link or a Node
 var currentLink = null; // a Link
 var movingObject = false;
+var movingAllObjects = false;
 var originalClick;
 
 function drawUsing(c) {
@@ -879,6 +880,9 @@ window.onload = function() {
 			resetCaret();
 		} else if(shift) {
 			currentLink = new TemporaryLink(mouse, mouse);
+		} else {
+			movingAllObjects = true;
+			canvas.style.cursor = "all-scroll";
 		}
 
 		draw();
@@ -908,8 +912,12 @@ window.onload = function() {
 		}
 	};
 
+	var prevMouse = null;
+	var mouse = null;
+
 	canvas.onmousemove = function(e) {
-		var mouse = crossBrowserRelativeMousePos(e);
+		prevMouse = mouse;
+		mouse = crossBrowserRelativeMousePos(e);
 
 		if(currentLink != null) {
 			var targetNode = selectObject(mouse.x, mouse.y);
@@ -935,17 +943,28 @@ window.onload = function() {
 			draw();
 		}
 
-		if(movingObject) {
+		else if(movingObject) {
 			selectedObject.setAnchorPoint(mouse.x, mouse.y);
 			if(selectedObject instanceof Node) {
 				snapNode(selectedObject);
 			}
 			draw();
 		}
+
+		else if (movingAllObjects) {
+			for(var i = 0; i < nodes.length; i++) {
+				nodes[i].x += mouse.x - prevMouse.x;
+				nodes[i].y += mouse.y - prevMouse.y;
+			}
+			
+			draw();
+		}
 	};
 
 	canvas.onmouseup = function(e) {
+		canvas.style.cursor = "default";
 		movingObject = false;
+		movingAllObjects = false;
 
 		if(currentLink != null) {
 			if(!(currentLink instanceof TemporaryLink)) {
