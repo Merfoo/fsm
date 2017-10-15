@@ -17,7 +17,6 @@ h1 {
 
 canvas {
 	display: block;
-	max-width: 800px;
 	background: white;
 	border-radius: 20px;
 	-moz-border-radius: 20px;
@@ -111,6 +110,13 @@ if (typeof btoa == 'undefined') {
 		</p>
 		<button type="button" onclick="importJsonFile()">Import JSON File</button>
 		<input id="importFileInput" hidden type="file" onchange="importFileChange(event)">
+		<div>
+			<label for="canvasWidth">Width</label>
+			<input id="canvasWidth" name="canvasWidth" class="canvasSizeInput" type="number" min="800">
+			<label for="canvasHeight">Height</label>
+			<input id="canvasHeight" name="canvasHeight" class="canvasSizeInput" type="number" min="600">
+			<button type="button" onclick="setCanvasSize()">Set canvas size</button>
+		</div>
 		<textarea id="output"></textarea>
 		<p>The big white box above is the FSM designer.&nbsp; Here's how to use it:</p>
 		<ul>

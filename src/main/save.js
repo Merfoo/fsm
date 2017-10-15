@@ -7,6 +7,8 @@ function importJson(jsonString) {
 		var backup = JSON.parse(jsonString);
 		nodes = [];
 		links = [];
+		canvas.width = backup.canvasWidth || canvas.width;
+		canvas.height = backup.canvasHeight || canvas.height;
 
 		for(var i = 0; i < backup.nodes.length; i++) {
 			var backupNode = backup.nodes[i];
@@ -51,6 +53,8 @@ function exportJson() {
 	var backup = {
 		'nodes': [],
 		'links': [],
+		'canvasWidth': canvas.width,
+		'canvasHeight': canvas.height
 	};
 	for(var i = 0; i < nodes.length; i++) {
 		var node = nodes[i];

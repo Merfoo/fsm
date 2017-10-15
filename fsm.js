@@ -601,6 +601,8 @@ function importJson(jsonString) {
 		var backup = JSON.parse(jsonString);
 		nodes = [];
 		links = [];
+		canvas.width = backup.canvasWidth || canvas.width;
+		canvas.height = backup.canvasHeight || canvas.height;
 
 		for(var i = 0; i < backup.nodes.length; i++) {
 			var backupNode = backup.nodes[i];
@@ -645,6 +647,8 @@ function exportJson() {
 	var backup = {
 		'nodes': [],
 		'links': [],
+		'canvasWidth': canvas.width,
+		'canvasHeight': canvas.height
 	};
 	for(var i = 0; i < nodes.length; i++) {
 		var node = nodes[i];
@@ -785,6 +789,8 @@ function resetCaret() {
 }
 
 var canvas;
+var canvasWidthInput;
+var canvasHeightInput;
 var nodeRadius = 30;
 var nodes = [];
 var links = [];
@@ -859,7 +865,21 @@ function snapNode(node) {
 
 window.onload = function() {
 	canvas = document.getElementById('canvas');
+	canvasWidthInput = document.getElementById("canvasWidth");
+	canvasHeightInput = document.getElementById("canvasHeight");
+
+	canvasWidthInput.value = canvas.width;
+	canvasHeightInput.value = canvas.height;
+
 	draw();
+
+	document.querySelectorAll(".canvasSizeInput").forEach(function(elem) {
+		elem.addEventListener("keypress", function(e) {
+			if (e.key === "Enter") {
+				setCanvasSize();
+			}
+		});
+	});
 
 	canvas.onmousedown = function(e) {
 		var mouse = crossBrowserRelativeMousePos(e);
@@ -1131,9 +1151,17 @@ function importFileChange(e) {
 
 	fileReader.onload = function(fileLoadedEvent) {
 		importJson(fileLoadedEvent.target.result);
+		canvasWidthInput.value = canvas.width;
+		canvasHeightInput.value = canvas.height;
 		draw();
 		e.target.value = "";
 	}
 
 	fileReader.readAsText(file, "UTF-8");
+}
+
+function setCanvasSize() {
+	canvas.width = canvasWidthInput.value;
+	canvas.height = canvasHeightInput.value;
+	draw();
 }
