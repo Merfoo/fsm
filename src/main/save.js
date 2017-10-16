@@ -9,6 +9,8 @@ function importJson(jsonString) {
 		links = [];
 		canvas.width = backup.canvasWidth || canvas.width;
 		canvas.height = backup.canvasHeight || canvas.height;
+		canvasWidthInput.value = canvas.width;
+		canvasHeightInput.value = canvas.height;
 
 		for(var i = 0; i < backup.nodes.length; i++) {
 			var backupNode = backup.nodes[i];

@@ -95,6 +95,8 @@ var canvasHeightInput;
 var nodeRadius = 30;
 var nodes = [];
 var links = [];
+var states = [];
+var statesIndex = -1;
 
 var cursorVisible = true;
 var snapToPadding = 6; // pixels
@@ -172,11 +174,12 @@ window.onload = function() {
 	canvasWidthInput.value = canvas.width;
 	canvasHeightInput.value = canvas.height;
 
+	updateStates();
 	draw();
 
 	document.querySelectorAll(".canvasSizeInput").forEach(function(elem) {
 		elem.addEventListener("keypress", function(e) {
-			if (e.key === "Enter") {
+			if(e.key === "Enter") {
 				setCanvasSize();
 			}
 		});
@@ -231,6 +234,8 @@ window.onload = function() {
 			selectedObject.isAcceptState = !selectedObject.isAcceptState;
 			draw();
 		}
+
+		updateStates();
 	};
 
 	var prevMouse = null;
@@ -272,7 +277,7 @@ window.onload = function() {
 			draw();
 		}
 
-		else if (movingAllObjects) {
+		else if(movingAllObjects) {
 			for(var i = 0; i < nodes.length; i++) {
 				nodes[i].x += mouse.x - prevMouse.x;
 				nodes[i].y += mouse.y - prevMouse.y;
@@ -296,6 +301,8 @@ window.onload = function() {
 			currentLink = null;
 			draw();
 		}
+
+		updateStates();
 	};
 }
 
@@ -342,6 +349,15 @@ document.onkeyup = function(e) {
 	if(key == 16) {
 		shift = false;
 	}
+
+	if(e.ctrlKey) {
+		if(key == 90) // ctrl z
+			getPreviousState();
+		else if(key == 89) // ctrl y
+			getNextState();
+	}
+
+	updateStates();
 };
 
 document.onkeypress = function(e) {
@@ -354,7 +370,7 @@ document.onkeypress = function(e) {
 		selectedObject.text += String.fromCharCode(key);
 		resetCaret();
 		draw();
-
+		
 		// don't let keys do their actions (like space scrolls down the page)
 		return false;
 	} else if(key == 8) {
@@ -452,9 +468,8 @@ function importFileChange(e) {
 
 	fileReader.onload = function(fileLoadedEvent) {
 		importJson(fileLoadedEvent.target.result);
-		canvasWidthInput.value = canvas.width;
-		canvasHeightInput.value = canvas.height;
 		draw();
+		updateStates();
 		e.target.value = "";
 	}
 
@@ -462,7 +477,7 @@ function importFileChange(e) {
 }
 
 function setCanvasSize() {
-	if (canvas.width !== canvasWidthInput.value) {
+	if(canvas.width !== canvasWidthInput.value) {
 		var diff = (canvasWidthInput.value - canvas.width) / 2;
 
 		for(var i = 0; i < nodes.length; i++)
@@ -471,5 +486,42 @@ function setCanvasSize() {
 	
 	canvas.width = canvasWidthInput.value;
 	canvas.height = canvasHeightInput.value;
+	draw();
+	updateStates();
+}
+
+function updateStates() {
+	var newState = exportJson();
+
+	if(newState !== states[statesIndex]) {
+		statesIndex++;
+		states.length = statesIndex;
+		states.push(exportJson());
+	}
+}
+
+function getPreviousState() {
+	statesIndex--;
+
+	if(statesIndex < 0) {
+		statesIndex = 0;
+		return;
+	}
+
+	state = states[statesIndex];
+	importJson(state);
+	draw();
+}
+
+function getNextState() {
+	statesIndex++;
+	
+	if(statesIndex >= states.length) {
+		statesIndex = states.length - 1;
+		return;
+	}
+
+	state = states[statesIndex];
+	importJson(state);
 	draw();
 }
