@@ -745,8 +745,7 @@ function canvasHasFocus() {
 	return (document.activeElement || document.body) == document.body;
 }
 
-function drawText(c, originalText, x, y, angleOrNull, isSelected) {
-	text = convertLatexShortcuts(originalText);
+function drawText(c, text, x, y, angleOrNull, isSelected) {
 	c.font = '20px "Times New Roman", serif';
 	var width = c.measureText(text).width;
 
@@ -765,20 +764,16 @@ function drawText(c, originalText, x, y, angleOrNull, isSelected) {
 	}
 
 	// draw text and caret (round the coordinates so the caret falls on a pixel)
-	if('advancedFillText' in c) {
-		c.advancedFillText(text, originalText, x + width / 2, y, angleOrNull);
-	} else {
-		x = Math.round(x);
-		y = Math.round(y);
-		c.fillText(text, x, y + 6);
-		if(isSelected && caretVisible && canvasHasFocus() && document.hasFocus()) {
-			var textToCaretWidth = c.measureText(text.substring(0, caretIndex)).width;
-			x += textToCaretWidth;
-			c.beginPath();
-			c.moveTo(x, y - 10);
-			c.lineTo(x, y + 10);
-			c.stroke();
-		}
+	x = Math.round(x);
+	y = Math.round(y);
+	c.fillText(text, x, y + 6);
+	if(isSelected && caretVisible && canvasHasFocus() && document.hasFocus()) {
+		var textBeforeCaretWidth = c.measureText(text.substring(0, caretIndex)).width;
+		x += textBeforeCaretWidth;
+		c.beginPath();
+		c.moveTo(x, y - 10);
+		c.lineTo(x, y + 10);
+		c.stroke();
 	}
 }
 
@@ -1107,8 +1102,18 @@ document.onkeypress = function(e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if(key >= 0x20 && key <= 0x7E && !e.metaKey && !e.altKey && !e.ctrlKey && selectedObject != null && 'text' in selectedObject) {
-		selectedObject.text = selectedObject.text.substring(0, caretIndex) + String.fromCharCode(key) + selectedObject.text.substring(caretIndex);
+		// Add the letter at the caret
+		var newText = selectedObject.text.substring(0, caretIndex) + String.fromCharCode(key) + selectedObject.text.substring(caretIndex);
 		caretIndex++;
+
+		// Parse for Latex short cuts and update the caret index appropriately 
+		var formattedText = convertLatexShortcuts(newText);
+		caretIndex -= newText.length - formattedText.length;
+
+		// Update the selected objects text
+		selectedObject.text = formattedText;
+
+		// Draw the new text
 		resetCaret();
 		draw();
 		
