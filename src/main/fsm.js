@@ -71,7 +71,8 @@ function drawText(c, originalText, x, y, angleOrNull, isSelected) {
 		y = Math.round(y);
 		c.fillText(text, x, y + 6);
 		if(isSelected && caretVisible && canvasHasFocus() && document.hasFocus()) {
-			x += width;
+			var textToCaretWidth = c.measureText(text.substring(0, caretIndex)).width;
+			x += textToCaretWidth;
 			c.beginPath();
 			c.moveTo(x, y - 10);
 			c.lineTo(x, y + 10);
@@ -82,6 +83,7 @@ function drawText(c, originalText, x, y, angleOrNull, isSelected) {
 
 var caretTimer;
 var caretVisible = true;
+var caretIndex = 0;
 
 function resetCaret() {
 	clearInterval(caretTimer);
@@ -98,7 +100,6 @@ var links = [];
 var states = [];
 var statesIndex = -1;
 
-var cursorVisible = true;
 var snapToPadding = 6; // pixels
 var hitTargetPadding = 6; // pixels
 var selectedObject = null; // either a Link or a Node
@@ -201,6 +202,8 @@ window.onload = function() {
 					selectedObject.setMouseStart(mouse.x, mouse.y);
 				}
 			}
+
+			caretIndex = selectedObject.text.length;
 			resetCaret();
 		} else if(shift) {
 			currentLink = new TemporaryLink(mouse, mouse);
@@ -235,6 +238,7 @@ window.onload = function() {
 			draw();
 		}
 
+		caretIndex = selectedObject.text.length;
 		updateStates();
 	};
 
@@ -296,6 +300,7 @@ window.onload = function() {
 			if(!(currentLink instanceof TemporaryLink)) {
 				selectedObject = currentLink;
 				links.push(currentLink);
+				caretIndex = 0;
 				resetCaret();
 			}
 			currentLink = null;
@@ -318,7 +323,19 @@ document.onkeydown = function(e) {
 		return true;
 	} else if(key == 8) { // backspace key
 		if(selectedObject != null && 'text' in selectedObject) {
-			selectedObject.text = selectedObject.text.substr(0, selectedObject.text.length - 1);
+			// Remove the character before the caret
+			var textBeforeCaret = selectedObject.text.substring(0, caretIndex - 1);
+			
+			// Get the text afte the caret
+			var textAfterCaret = selectedObject.text.substring(caretIndex);
+			
+			// Set the selected objects text to the concatnation of the text before and after the caret
+			selectedObject.text = textBeforeCaret + textAfterCaret;
+
+			// Decrement the caret index and reset the caret
+			if(--caretIndex < 0)
+				caretIndex = 0;
+
 			resetCaret();
 			draw();
 		}
@@ -346,8 +363,30 @@ document.onkeydown = function(e) {
 document.onkeyup = function(e) {
 	var key = crossBrowserKey(e);
 
-	if(key == 16) {
+	if(key === 16) {
 		shift = false;
+	}
+
+	// Left arrow key
+	if(key === 37){
+		if(selectedObject && selectedObject.text){
+			if(--caretIndex < 0)
+				caretIndex = 0;
+
+			resetCaret();
+			draw();
+		}
+	}
+
+	// Right arrow key
+	if(key === 39){
+		if(selectedObject && selectedObject.text){
+			if(++caretIndex > selectedObject.text.length)
+				caretIndex = selectedObject.text.length;
+
+			resetCaret();
+			draw();
+		}
 	}
 
 	if(e.ctrlKey) {
@@ -367,7 +406,8 @@ document.onkeypress = function(e) {
 		// don't read keystrokes when other things have focus
 		return true;
 	} else if(key >= 0x20 && key <= 0x7E && !e.metaKey && !e.altKey && !e.ctrlKey && selectedObject != null && 'text' in selectedObject) {
-		selectedObject.text += String.fromCharCode(key);
+		selectedObject.text = selectedObject.text.substring(0, caretIndex) + String.fromCharCode(key) + selectedObject.text.substring(caretIndex);
+		caretIndex++;
 		resetCaret();
 		draw();
 		
